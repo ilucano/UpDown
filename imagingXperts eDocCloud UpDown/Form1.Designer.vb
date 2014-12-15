@@ -32,15 +32,25 @@ Partial Class frmMain
         Me.btnRefreshList = New System.Windows.Forms.ToolStripButton()
         Me.ToolStripSeparator1 = New System.Windows.Forms.ToolStripSeparator()
         Me.btnDown = New System.Windows.Forms.ToolStripButton()
-        Me.tab2 = New System.Windows.Forms.TabPage()
-        Me.cntMnu = New System.Windows.Forms.ContextMenuStrip(Me.components)
-        Me.ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem()
         Me.txtFolder = New System.Windows.Forms.ToolStripTextBox()
         Me.btnBrowse = New System.Windows.Forms.ToolStripButton()
+        Me.tab2 = New System.Windows.Forms.TabPage()
+        Me.chkMeta = New System.Windows.Forms.CheckBox()
+        Me.lView = New System.Windows.Forms.ListView()
+        Me.ToolStrip2 = New System.Windows.Forms.ToolStrip()
+        Me.ToolStripButton1 = New System.Windows.Forms.ToolStripButton()
+        Me.ToolStripSeparator2 = New System.Windows.Forms.ToolStripSeparator()
+        Me.ToolStripButton2 = New System.Windows.Forms.ToolStripButton()
+        Me.ToolStripSeparator3 = New System.Windows.Forms.ToolStripSeparator()
+        Me.prg = New System.Windows.Forms.ToolStripProgressBar()
+        Me.cntMnu = New System.Windows.Forms.ContextMenuStrip(Me.components)
+        Me.ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem()
         Me.fldBrowse = New System.Windows.Forms.FolderBrowserDialog()
         Me.tabGen.SuspendLayout()
         Me.tab1.SuspendLayout()
         Me.ToolStrip1.SuspendLayout()
+        Me.tab2.SuspendLayout()
+        Me.ToolStrip2.SuspendLayout()
         Me.cntMnu.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -108,6 +118,7 @@ Partial Class frmMain
         Me.btnRefreshList.ImageTransparentColor = System.Drawing.Color.White
         Me.btnRefreshList.Name = "btnRefreshList"
         Me.btnRefreshList.Size = New System.Drawing.Size(54, 54)
+        Me.btnRefreshList.Text = "Refresh Tree"
         Me.btnRefreshList.ToolTipText = "Refresh List"
         '
         'ToolStripSeparator1
@@ -124,8 +135,25 @@ Partial Class frmMain
         Me.btnDown.Size = New System.Drawing.Size(54, 54)
         Me.btnDown.Text = "Download Box"
         '
+        'txtFolder
+        '
+        Me.txtFolder.Name = "txtFolder"
+        Me.txtFolder.Size = New System.Drawing.Size(150, 57)
+        '
+        'btnBrowse
+        '
+        Me.btnBrowse.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image
+        Me.btnBrowse.Image = CType(resources.GetObject("btnBrowse.Image"), System.Drawing.Image)
+        Me.btnBrowse.ImageTransparentColor = System.Drawing.Color.White
+        Me.btnBrowse.Name = "btnBrowse"
+        Me.btnBrowse.Size = New System.Drawing.Size(54, 54)
+        Me.btnBrowse.Text = "Browse Folder"
+        '
         'tab2
         '
+        Me.tab2.Controls.Add(Me.chkMeta)
+        Me.tab2.Controls.Add(Me.lView)
+        Me.tab2.Controls.Add(Me.ToolStrip2)
         Me.tab2.Location = New System.Drawing.Point(4, 22)
         Me.tab2.Name = "tab2"
         Me.tab2.Padding = New System.Windows.Forms.Padding(3)
@@ -133,6 +161,73 @@ Partial Class frmMain
         Me.tab2.TabIndex = 1
         Me.tab2.Text = "Upload Boxes"
         Me.tab2.UseVisualStyleBackColor = True
+        '
+        'chkMeta
+        '
+        Me.chkMeta.AutoSize = True
+        Me.chkMeta.BackColor = System.Drawing.Color.WhiteSmoke
+        Me.chkMeta.Location = New System.Drawing.Point(440, 23)
+        Me.chkMeta.Name = "chkMeta"
+        Me.chkMeta.Size = New System.Drawing.Size(87, 17)
+        Me.chkMeta.TabIndex = 10
+        Me.chkMeta.Text = "Search Meta"
+        Me.chkMeta.UseVisualStyleBackColor = False
+        '
+        'lView
+        '
+        Me.lView.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.lView.FullRowSelect = True
+        Me.lView.Location = New System.Drawing.Point(3, 60)
+        Me.lView.MultiSelect = False
+        Me.lView.Name = "lView"
+        Me.lView.Size = New System.Drawing.Size(650, 386)
+        Me.lView.TabIndex = 9
+        Me.lView.UseCompatibleStateImageBehavior = False
+        Me.lView.View = System.Windows.Forms.View.List
+        '
+        'ToolStrip2
+        '
+        Me.ToolStrip2.ImageScalingSize = New System.Drawing.Size(50, 50)
+        Me.ToolStrip2.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.ToolStripButton1, Me.ToolStripSeparator2, Me.ToolStripButton2, Me.ToolStripSeparator3, Me.prg})
+        Me.ToolStrip2.Location = New System.Drawing.Point(3, 3)
+        Me.ToolStrip2.Name = "ToolStrip2"
+        Me.ToolStrip2.Size = New System.Drawing.Size(650, 57)
+        Me.ToolStrip2.TabIndex = 8
+        Me.ToolStrip2.Text = "tools"
+        '
+        'ToolStripButton1
+        '
+        Me.ToolStripButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image
+        Me.ToolStripButton1.Image = CType(resources.GetObject("ToolStripButton1.Image"), System.Drawing.Image)
+        Me.ToolStripButton1.ImageTransparentColor = System.Drawing.Color.White
+        Me.ToolStripButton1.Name = "ToolStripButton1"
+        Me.ToolStripButton1.Size = New System.Drawing.Size(54, 54)
+        Me.ToolStripButton1.Text = "Refresh List"
+        Me.ToolStripButton1.ToolTipText = "Refresh List"
+        '
+        'ToolStripSeparator2
+        '
+        Me.ToolStripSeparator2.Name = "ToolStripSeparator2"
+        Me.ToolStripSeparator2.Size = New System.Drawing.Size(6, 57)
+        '
+        'ToolStripButton2
+        '
+        Me.ToolStripButton2.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image
+        Me.ToolStripButton2.Image = Global.imagingXperts_eDocCloud_UpDown.My.Resources.Resources._1418433377_ark
+        Me.ToolStripButton2.ImageTransparentColor = System.Drawing.Color.White
+        Me.ToolStripButton2.Name = "ToolStripButton2"
+        Me.ToolStripButton2.Size = New System.Drawing.Size(54, 54)
+        Me.ToolStripButton2.Text = "Upload Box"
+        '
+        'ToolStripSeparator3
+        '
+        Me.ToolStripSeparator3.Name = "ToolStripSeparator3"
+        Me.ToolStripSeparator3.Size = New System.Drawing.Size(6, 57)
+        '
+        'prg
+        '
+        Me.prg.Name = "prg"
+        Me.prg.Size = New System.Drawing.Size(300, 54)
         '
         'cntMnu
         '
@@ -146,20 +241,6 @@ Partial Class frmMain
         Me.ToolStripMenuItem1.Name = "ToolStripMenuItem1"
         Me.ToolStripMenuItem1.Size = New System.Drawing.Size(150, 22)
         Me.ToolStripMenuItem1.Text = "Download Box"
-        '
-        'txtFolder
-        '
-        Me.txtFolder.Name = "txtFolder"
-        Me.txtFolder.Size = New System.Drawing.Size(150, 57)
-        '
-        'btnBrowse
-        '
-        Me.btnBrowse.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image
-        Me.btnBrowse.Image = CType(resources.GetObject("btnBrowse.Image"), System.Drawing.Image)
-        Me.btnBrowse.ImageTransparentColor = System.Drawing.Color.White
-        Me.btnBrowse.Name = "btnBrowse"
-        Me.btnBrowse.Size = New System.Drawing.Size(54, 54)
-        Me.btnBrowse.Text = "ToolStripButton1"
         '
         'frmMain
         '
@@ -175,6 +256,10 @@ Partial Class frmMain
         Me.tab1.PerformLayout()
         Me.ToolStrip1.ResumeLayout(False)
         Me.ToolStrip1.PerformLayout()
+        Me.tab2.ResumeLayout(False)
+        Me.tab2.PerformLayout()
+        Me.ToolStrip2.ResumeLayout(False)
+        Me.ToolStrip2.PerformLayout()
         Me.cntMnu.ResumeLayout(False)
         Me.ResumeLayout(False)
 
@@ -193,5 +278,13 @@ Partial Class frmMain
     Friend WithEvents txtFolder As System.Windows.Forms.ToolStripTextBox
     Friend WithEvents btnBrowse As System.Windows.Forms.ToolStripButton
     Friend WithEvents fldBrowse As System.Windows.Forms.FolderBrowserDialog
+    Friend WithEvents ToolStrip2 As System.Windows.Forms.ToolStrip
+    Friend WithEvents ToolStripButton1 As System.Windows.Forms.ToolStripButton
+    Friend WithEvents ToolStripSeparator2 As System.Windows.Forms.ToolStripSeparator
+    Friend WithEvents ToolStripButton2 As System.Windows.Forms.ToolStripButton
+    Friend WithEvents lView As System.Windows.Forms.ListView
+    Friend WithEvents ToolStripSeparator3 As System.Windows.Forms.ToolStripSeparator
+    Friend WithEvents prg As System.Windows.Forms.ToolStripProgressBar
+    Friend WithEvents chkMeta As System.Windows.Forms.CheckBox
 
 End Class
