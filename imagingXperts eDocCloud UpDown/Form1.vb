@@ -486,7 +486,7 @@ Public Class frmMain
     Private Sub CreateFile(strFile As String, intEmpresa As Integer, intParent As Integer, strPath As String, strChart As String)
         Dim intPages As Integer
         Dim intFileSize As Long
-        Dim strVersion, strRemotePath As String
+        Dim strVersion, strRemotePath, strOtro As String
         Try
             Dim oReader As New iTextSharp.text.pdf.PdfReader(strPath & "\" & strFile)
             Dim sOut = ""
@@ -503,7 +503,8 @@ Public Class frmMain
 
             miFolder = "/opt/eDocCloud/files" & strText1 & strYear & _
                 "/" & intEmpresa.ToString & "/" & intParent.ToString & "/" & strChart
-            strRemotePath = strText2 & strYear & _
+            strRemotePath = miFolder & "/" & strFile
+            strOtro = strText2 & strYear & _
                 "/" & intEmpresa.ToString & "/" & intParent.ToString & "/" & strChart & "/" & strFile
 
             If UploadFile(strPath & "\" & strFile, strRemotePath, miFolder) Then
@@ -530,7 +531,7 @@ Public Class frmMain
                 cmd.Parameters.AddWithValue("@parent_id", strChart)
                 cmd.Parameters.AddWithValue("@texto", sOut)
                 strRemotePath = strRemotePath.Replace("ftp://www.edoccloud.com//opt/eDocCloud/files/", "")
-                cmd.Parameters.AddWithValue("@path", strRemotePath)
+                cmd.Parameters.AddWithValue("@path", strOtro)
                 Try
                     conn.Open()
                 Catch myerror As MySqlException
