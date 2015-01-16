@@ -2,6 +2,8 @@
 Imports System.IO
 Imports MySql.Data
 Imports MySql.Data.MySqlClient
+Imports iTextSharp.text.pdf
+Imports iTextSharp.text.pdf.parser
 
 Public Class frmMain
 
@@ -28,6 +30,7 @@ Public Class frmMain
             txtFolder.Text = "C:\TEST"
         End If
         RefreshList()
+        RefreshListWF()
     End Sub
     Private Sub RefreshList()
         tView.Nodes.Clear()
@@ -54,6 +57,38 @@ Public Class frmMain
                 li.Text = reader.GetString(1)
                 tView.Nodes.Add(li)
                 GetOrders(li)
+            End While
+
+            conn.Close()
+
+        Catch ex As Exception
+            Console.WriteLine(ex.Message)
+        End Try
+
+    End Sub
+    Private Sub RefreshListWF()
+        lView.Items.Clear()
+
+        Try
+
+            Dim query As String = "SELECT * FROM workflow WHERE fk_status = 14"
+
+            Dim conn As New MySqlConnection(cnStr)
+            Dim cmd As New MySqlCommand(query, conn)
+            Try
+                conn.Open()
+            Catch myerror As MySqlException
+                MsgBox("Connection to the Database Failed")
+            End Try
+            Dim reader As MySqlDataReader
+            reader = cmd.ExecuteReader()
+
+            While reader.Read()
+                Dim li As New ListViewItem
+                'li.ImageIndex = 0
+                li.Tag = reader.GetValue(0)
+                li.Text = reader.GetString(1)
+                lView.Items.Add(li)
             End While
 
             conn.Close()
@@ -258,7 +293,8 @@ Public Class frmMain
         Dim ftpStream As Stream = Nothing
         Try
             Dim outputStream As New FileStream(SaveFilePath + "\" + SaveFileName, FileMode.Create)
-            reqFTP = DirectCast(FtpWebRequest.Create(New Uri("ftp://" + FTPSettings.IP + "/etc/eDocCloud/" + RemoteFile)), FtpWebRequest)
+            Dim strPath As String = Uri.EscapeUriString("ftp://" + FTPSettings.IP + "/opt/eDocCloud/files/" + RemoteFile)
+            reqFTP = DirectCast(FtpWebRequest.Create(strPath), FtpWebRequest)
             reqFTP.Method = WebRequestMethods.Ftp.DownloadFile
             reqFTP.UseBinary = True
             reqFTP.Credentials = New NetworkCredential(FTPSettings.UserID, FTPSettings.Password)
@@ -317,6 +353,232 @@ Public Class frmMain
         End Property
         Private Shared m_Password As String
     End Class
+
+    Private Sub ToolStripButton1_Click(sender As Object, e As EventArgs) Handles ToolStripButton1.Click
+        RefreshListWF()
+    End Sub
+
+    Private Sub ToolStripButton2_Click(sender As Object, e As EventArgs) Handles ToolStripButton2.Click
+        ' Primero Busco la Caja la obtengo del WF
+        If lView.SelectedItems.Count > 0 Then
+            fldBrowse.SelectedPath = "C:\"
+            If fldBrowse.ShowDialog() = Windows.Forms.DialogResult.OK Then
+                If My.Computer.FileSystem.DirectoryExists(fldBrowse.SelectedPath) Then
+                    UploadBox(lView.SelectedItems(0).Text, fldBrowse.SelectedPath)
+                Else
+                    MessageBox.Show("Directory is incorrect", "imagingXperts LLC", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                End If
+            End If
+        Else
+            MessageBox.Show("No item selected", "imagingXperts LLC", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End If
+    End Sub
+    Public Sub UploadBox(wfId As String, dirFold As String)
+
+        Try
+            Dim query As String = "SELECT * FROM pickup WHERE fk_barcode = " & wfId
+
+            Dim conn As New MySqlConnection(cnStr)
+            Dim cmd As New MySqlCommand(query, conn)
+            Try
+                conn.Open()
+            Catch myerror As MySqlException
+                MsgBox("Connection to the Database Failed")
+            End Try
+            Dim reader As MySqlDataReader
+            reader = cmd.ExecuteReader()
+
+            While reader.Read()
+                ' Box: reader.GetValue(11)
+                FindCharts(reader.GetValue(11), dirFold, reader.GetValue(2))
+            End While
+
+            conn.Close()
+
+        Catch ex As Exception
+            Console.WriteLine(ex.Message)
+        End Try
+    End Sub
+    Private Sub FindCharts(boxId As String, strFolder As String, strCompany As Integer)
+        ' Cargo todos los directorios de la carpeta en el objects
+        Dim di As New DirectoryInfo(strFolder)
+        ' Get a reference to each file in that directory.
+        Dim fiArr As DirectoryInfo() = di.GetDirectories
+        ' Display the names of the files.
+        Dim fri As DirectoryInfo
+
+        prg.Minimum = 0
+        prg.Maximum = fiArr.Count
+
+        For Each fri In fiArr
+            prg.Increment(1)
+            Application.DoEvents()
+            If Not (My.Computer.FileSystem.FileExists(fri.FullName & "\OK")) Then
+                Dim intChart As String = CreateChart(strCompany, fri.Name, boxId)
+                If GetEachFile(fri.FullName, strCompany, boxId, intChart) Then
+                    File.Create(fri.FullName & "\OK").Dispose()
+                End If
+            End If
+        Next fri
+    End Sub
+    Private Function CreateChart(strCompany As Integer, strFolder As String, boxId As String) As String
+        Dim retVal As String = "-1"
+        Try
+            Dim query As String = "INSERT INTO objects (fk_obj_type, fk_company, f_name, fk_parent" & _
+                ", creation, fk_status) VALUES (3,'" & _
+                strCompany & "','" & strFolder & "'," & boxId & _
+                ",'" & DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") & "',3)"
+
+            Dim conn As New MySqlConnection(cnStr)
+            Dim cmd As New MySqlCommand(query, conn)
+            Try
+                conn.Open()
+            Catch myerror As MySqlException
+                MsgBox("Connection to the Database Failed")
+            End Try
+            cmd.ExecuteNonQuery()
+
+            cmd.CommandText = "SELECT  LAST_INSERT_ID()   FROM objects"
+            retVal = cmd.ExecuteScalar()
+            conn.Close()
+
+        Catch ex As Exception
+            Console.WriteLine(ex.Message)
+        End Try
+        Return retVal
+    End Function
+    Private Sub CreateFile(strFile As String, intEmpresa As Integer, intParent As Integer, strPath As String, strChart As String)
+        Dim intPages As Integer
+        Dim intFileSize As Long
+        Dim strVersion, strRemotePath As String
+        Try
+            Dim oReader As New iTextSharp.text.pdf.PdfReader(strPath & "\" & strFile)
+            Dim sOut = ""
+            intPages = oReader.NumberOfPages
+            intFileSize = oReader.FileLength
+            strVersion = oReader.PdfVersion
+
+            'arc/2014/3/838/1321/
+            ' arc <year> <company> <order> <parent>
+            Dim strText1 As String = "/arc/"
+            Dim strYear As String = Now.Year.ToString
+            Dim miFolder As String
+
+            miFolder = "ftp://www.edoccloud.com//opt/eDocCloud/files" & strText1 & strYear & _
+                "/" & intEmpresa.ToString & "/" & intParent.ToString & "/" & strChart
+            strRemotePath = miFolder & "/" & strFile
+
+            UploadFile(strPath & "\" & strFile, strRemotePath, miFolder)
+
+            For i = 1 To intPages
+                Dim its As New iTextSharp.text.pdf.parser.SimpleTextExtractionStrategy
+
+                sOut &= iTextSharp.text.pdf.parser.PdfTextExtractor.GetTextFromPage(oReader, i, its)
+            Next
+
+            Dim query As String = "INSERT INTO files (filename, creadate, moddate, pages" & _
+                ", filesize, pdf_version, fk_empresa, parent_id, texto, path) VALUES (@filename, @creadate," & _
+                "@moddate, @pages, @filesize, @pdf_version, @fk_empresa, @parent_id, @texto, @path)"
+
+            Dim conn As New MySqlConnection(cnStr)
+            Dim cmd As New MySqlCommand(query, conn)
+            cmd.Parameters.AddWithValue("@filename", strFile)
+            cmd.Parameters.AddWithValue("@creadate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))
+            cmd.Parameters.AddWithValue("@moddate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))
+            cmd.Parameters.AddWithValue("@pages", intPages)
+            cmd.Parameters.AddWithValue("@filesize", intFileSize)
+            cmd.Parameters.AddWithValue("@pdf_version", strVersion)
+            cmd.Parameters.AddWithValue("@fk_empresa", intEmpresa)
+            cmd.Parameters.AddWithValue("@parent_id", strChart)
+            cmd.Parameters.AddWithValue("@texto", sOut)
+            strRemotePath = strRemotePath.Replace("ftp://www.edoccloud.com//opt/eDocCloud/files/", "")
+            cmd.Parameters.AddWithValue("@path", strRemotePath)
+            Try
+                conn.Open()
+            Catch myerror As MySqlException
+                MsgBox("Connection to the Database Failed")
+            End Try
+            cmd.ExecuteNonQuery()
+            conn.Close()
+
+        Catch ex As Exception
+            Console.WriteLine(ex.Message)
+        End Try
+    End Sub
+    Private Function GetEachFile(strDir As String, intEmpresa As Integer, intParent As Integer, strChart As String) As Boolean
+        Dim strRet As Boolean = False
+
+        ' Cargo todos los documentos del directorio
+        Dim di As New DirectoryInfo(strDir)
+        ' Get a reference to each file in that directory.
+        Dim fiArr As FileInfo() = di.GetFiles()
+        ' Display the names of the files.
+        Dim fri As FileInfo
+
+        For Each fri In fiArr
+            If Not (My.Computer.FileSystem.FileExists(fri.FullName & "\OK")) Then
+                CreateFile(fri.Name, intEmpresa, intParent, fri.DirectoryName, strChart)
+                'If GetEachFile(fri.FullName) Then
+                '    File.Create(fri.FullName & "\OK").Dispose()
+                'End If
+            End If
+        Next fri
+
+        Return strRet
+    End Function
+    Public Shared Function GetTextFromPDF(PdfFileName As String) As String
+        Dim oReader As New iTextSharp.text.pdf.PdfReader(PdfFileName)
+
+        Dim sOut = ""
+
+        For i = 1 To oReader.NumberOfPages
+            Dim its As New iTextSharp.text.pdf.parser.SimpleTextExtractionStrategy
+
+            sOut &= iTextSharp.text.pdf.parser.PdfTextExtractor.GetTextFromPage(oReader, i, its)
+        Next
+
+        Return sOut
+    End Function
+    Private Function UploadFile(ByVal LocalFileName As String, ByVal miUri As String, miFolder As String) As Boolean
+        Dim strRet As Boolean = False
+        FTPSettings.UserID = "ftpuser"
+        FTPSettings.Password = "Zr;:F+7.9gm=D+m"
+
+        'Dim miRequest As System.Net.FtpWebRequest = DirectCast(System.Net.WebRequest.Create(miUri), System.Net.FtpWebRequest)
+        'miRequest.Credentials = New Net.NetworkCredential(FTPSettings.UserID, FTPSettings.Password)
+        'miRequest.Method = Net.WebRequestMethods.Ftp.UploadFile
+        Try
+            If Not WebRequestMethods.Ftp.ListDirectoryDetails.Contains(miFolder) Then
+
+                Dim FTPReq As System.Net.FtpWebRequest = CType(WebRequest.Create(miFolder), FtpWebRequest)
+                FTPReq.Credentials = New NetworkCredential(FTPSettings.UserID, FTPSettings.Password)
+                FTPReq.Method = WebRequestMethods.Ftp.MakeDirectory
+
+                Dim FTPRes As FtpWebResponse
+                Try
+                    FTPRes = CType(FTPReq.GetResponse, FtpWebResponse)
+                Catch ex As Exception
+
+                End Try
+
+            End If
+
+            My.Computer.Network.UploadFile(LocalFileName, miUri, FTPSettings.UserID, FTPSettings.Password)
+            'Dim bFile() As Byte = System.IO.File.ReadAllBytes(LocalFileName)
+            'Dim miStream As System.IO.Stream = miRequest.GetRequestStream()
+            'miStream.Write(bFile, 0, bFile.Length)
+            'miStream.Close()
+            'miStream.Dispose()
+            'strRet = True
+        Catch ex As Exception
+            Throw New Exception(ex.Message & ". File cannot be snded.")
+        End Try
+        Return strRet
+    End Function
+
+    Private Sub lView_SelectedIndexChanged(sender As Object, e As EventArgs) Handles lView.SelectedIndexChanged
+
+    End Sub
 End Class
 
 
