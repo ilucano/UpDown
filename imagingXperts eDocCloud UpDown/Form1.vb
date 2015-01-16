@@ -4,18 +4,21 @@ Imports MySql.Data
 Imports MySql.Data.MySqlClient
 Imports iTextSharp.text.pdf
 Imports iTextSharp.text.pdf.parser
+Imports NUnit.Framework
 
 Public Class frmMain
 
+
     'Dim conn As MySqlConnection
     Const cnStr As String = "server=www.edoccloud.com;user id=shaman;password=pampita1280;database=ilucano_edoccloud"
+    Dim fUserID As String = "ftpuser"
+    Dim fPassword As String = "Zr;:F+7.9gm=D+m"
     Private m_OldSelectNode As TreeNode
 
     Private Sub frmMain_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
         Dim lngRC As Long
         lngRC = WritePrivateProfileString("Download", "DownloadPath", txtFolder.Text, "appinfo.ini")
     End Sub
-
     Private Sub frmMain_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Dim rcl As Integer
         Dim strWork As String
@@ -71,7 +74,7 @@ Public Class frmMain
 
         Try
 
-            Dim query As String = "SELECT * FROM workflow WHERE fk_status = 14"
+            Dim query As String = "SELECT * FROM workflow WHERE fk_status = 12"
 
             Dim conn As New MySqlConnection(cnStr)
             Dim cmd As New MySqlCommand(query, conn)
@@ -296,7 +299,7 @@ Public Class frmMain
             reqFTP = DirectCast(FtpWebRequest.Create(strPath), FtpWebRequest)
             reqFTP.Method = WebRequestMethods.Ftp.DownloadFile
             reqFTP.UseBinary = True
-            reqFTP.Credentials = New NetworkCredential(FTPSettings.UserID, FTPSettings.Password)
+            reqFTP.Credentials = New NetworkCredential(fUserID, fPassword)
             Dim response As FtpWebResponse = DirectCast(reqFTP.GetResponse(), FtpWebResponse)
             ftpStream = response.GetResponseStream()
             Dim cl As Long = response.ContentLength
@@ -364,6 +367,8 @@ Public Class frmMain
             If fldBrowse.ShowDialog() = Windows.Forms.DialogResult.OK Then
                 If My.Computer.FileSystem.DirectoryExists(fldBrowse.SelectedPath) Then
                     UploadBox(lView.SelectedItems(0).Text, fldBrowse.SelectedPath)
+                    MessageBox.Show("Box Uploaded Correctly", "imagingXperts LLC", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    prg.Value = 0
                 Else
                     MessageBox.Show("Directory is incorrect", "imagingXperts LLC", MessageBoxButtons.OK, MessageBoxIcon.Error)
                 End If
@@ -382,7 +387,7 @@ Public Class frmMain
             Try
                 conn.Open()
             Catch myerror As MySqlException
-                MsgBox("Connection to the Database Failed")
+                MsgBox("Connection to the Database Failed. Get Pickup")
             End Try
             Dim reader As MySqlDataReader
             reader = cmd.ExecuteReader()
@@ -409,6 +414,37 @@ Public Class frmMain
         prg.Minimum = 0
         prg.Maximum = fiArr.Count
 
+        Dim strText1 As String = "/arc/"
+        Dim strYear As String = Now.Year.ToString
+        Dim miFolder As String
+
+        miFolder = "/opt/eDocCloud/files" & strText1 & strYear & _
+            "/" & strCompany.ToString & "/" & boxId.ToString
+
+        ftpCli.ServerAddress = "www.edoccloud.com"
+        ftpCli.UserName = fUserID
+        ftpCli.Password = fPassword
+        ftpCli.Connect()
+
+        Try
+            ftpCli.CreateDirectory(miFolder)
+        Catch ex As Exception
+
+        End Try
+
+        ftpCli.ServerDirectory = miFolder
+
+        'Dim FTPReq As System.Net.FtpWebRequest = CType(WebRequest.Create(miFolder), FtpWebRequest)
+        'FTPReq.Credentials = New NetworkCredential(fUserID, fPassword)
+        'FTPReq.Method = WebRequestMethods.Ftp.MakeDirectory
+
+        'Dim FTPRes As FtpWebResponse
+        'Try
+        '    FTPRes = CType(FTPReq.GetResponse, FtpWebResponse)
+        'Catch ex As Exception
+        '    MessageBox.Show("ex")
+        'End Try
+
         For Each fri In fiArr
             prg.Increment(1)
             Application.DoEvents()
@@ -426,14 +462,14 @@ Public Class frmMain
             Dim query As String = "INSERT INTO objects (fk_obj_type, fk_company, f_name, fk_parent" & _
                 ", creation, fk_status) VALUES (3,'" & _
                 strCompany & "','" & strFolder & "'," & boxId & _
-                ",'" & DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") & "',3)"
+                ",'" & DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") & "',5)"
 
             Dim conn As New MySqlConnection(cnStr)
             Dim cmd As New MySqlCommand(query, conn)
             Try
                 conn.Open()
             Catch myerror As MySqlException
-                MsgBox("Connection to the Database Failed")
+                MsgBox("Connection to the Database Failed. Chart Creation")
             End Try
             cmd.ExecuteNonQuery()
 
@@ -463,43 +499,45 @@ Public Class frmMain
             Dim strYear As String = Now.Year.ToString
             Dim miFolder As String
 
-            miFolder = "ftp://www.edoccloud.com//opt/eDocCloud/files" & strText1 & strYear & _
+            miFolder = "/opt/eDocCloud/files" & strText1 & strYear & _
                 "/" & intEmpresa.ToString & "/" & intParent.ToString & "/" & strChart
             strRemotePath = miFolder & "/" & strFile
 
-            UploadFile(strPath & "\" & strFile, strRemotePath, miFolder)
+            If UploadFile(strPath & "\" & strFile, strRemotePath, miFolder) Then
 
-            For i = 1 To intPages
-                Dim its As New iTextSharp.text.pdf.parser.SimpleTextExtractionStrategy
+                For i = 1 To intPages
+                    Dim its As New iTextSharp.text.pdf.parser.SimpleTextExtractionStrategy
 
-                sOut &= iTextSharp.text.pdf.parser.PdfTextExtractor.GetTextFromPage(oReader, i, its)
-            Next
+                    sOut &= iTextSharp.text.pdf.parser.PdfTextExtractor.GetTextFromPage(oReader, i, its)
+                Next
 
-            Dim query As String = "INSERT INTO files (filename, creadate, moddate, pages" & _
-                ", filesize, pdf_version, fk_empresa, parent_id, texto, path) VALUES (@filename, @creadate," & _
-                "@moddate, @pages, @filesize, @pdf_version, @fk_empresa, @parent_id, @texto, @path)"
+                Dim query As String = "INSERT INTO files (filename, creadate, moddate, pages" & _
+                    ", filesize, pdf_version, fk_empresa, parent_id, texto, path) VALUES (@filename, @creadate," & _
+                    "@moddate, @pages, @filesize, @pdf_version, @fk_empresa, @parent_id, @texto, @path)"
 
-            Dim conn As New MySqlConnection(cnStr)
-            Dim cmd As New MySqlCommand(query, conn)
-            cmd.Parameters.AddWithValue("@filename", strFile)
-            cmd.Parameters.AddWithValue("@creadate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))
-            cmd.Parameters.AddWithValue("@moddate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))
-            cmd.Parameters.AddWithValue("@pages", intPages)
-            cmd.Parameters.AddWithValue("@filesize", intFileSize)
-            cmd.Parameters.AddWithValue("@pdf_version", strVersion)
-            cmd.Parameters.AddWithValue("@fk_empresa", intEmpresa)
-            cmd.Parameters.AddWithValue("@parent_id", strChart)
-            cmd.Parameters.AddWithValue("@texto", sOut)
-            strRemotePath = strRemotePath.Replace("ftp://www.edoccloud.com//opt/eDocCloud/files/", "")
-            cmd.Parameters.AddWithValue("@path", strRemotePath)
-            Try
-                conn.Open()
-            Catch myerror As MySqlException
-                MsgBox("Connection to the Database Failed")
-            End Try
-            cmd.ExecuteNonQuery()
-            conn.Close()
-
+                Dim conn As New MySqlConnection(cnStr)
+                Dim cmd As New MySqlCommand(query, conn)
+                cmd.Parameters.AddWithValue("@filename", strFile)
+                cmd.Parameters.AddWithValue("@creadate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))
+                cmd.Parameters.AddWithValue("@moddate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))
+                cmd.Parameters.AddWithValue("@pages", intPages)
+                cmd.Parameters.AddWithValue("@filesize", intFileSize)
+                cmd.Parameters.AddWithValue("@pdf_version", strVersion)
+                cmd.Parameters.AddWithValue("@fk_empresa", intEmpresa)
+                cmd.Parameters.AddWithValue("@parent_id", strChart)
+                cmd.Parameters.AddWithValue("@texto", sOut)
+                strRemotePath = strRemotePath.Replace("ftp://www.edoccloud.com//opt/eDocCloud/files/", "")
+                cmd.Parameters.AddWithValue("@path", strRemotePath)
+                Try
+                    conn.Open()
+                Catch myerror As MySqlException
+                    MsgBox("Connection to the Database Failed. File Creation")
+                End Try
+                cmd.ExecuteNonQuery()
+                conn.Close()
+            Else
+                MsgBox("Connection to the Database Failed. Upload")
+            End If
         Catch ex As Exception
             Console.WriteLine(ex.Message)
         End Try
@@ -513,15 +551,34 @@ Public Class frmMain
         Dim fiArr As FileInfo() = di.GetFiles()
         ' Display the names of the files.
         Dim fri As FileInfo
+        Dim intCnt As Integer = 0
 
         For Each fri In fiArr
             If Not (My.Computer.FileSystem.FileExists(fri.FullName & "\OK")) Then
+                If intCnt = 0 Then
+                    Dim strText1 As String = "/arc/"
+                    Dim strYear As String = Now.Year.ToString
+                    Dim miFolder As String
+
+                    miFolder = "ftp://www.edoccloud.com//opt/eDocCloud/files" & strText1 & strYear & _
+                        "/" & intEmpresa.ToString & "/" & intParent.ToString & "/" & strChart
+
+                    Dim FTPReq As System.Net.FtpWebRequest = CType(WebRequest.Create(miFolder), FtpWebRequest)
+                    FTPReq.Credentials = New NetworkCredential(fUserID, fPassword)
+                    FTPReq.Method = WebRequestMethods.Ftp.MakeDirectory
+
+                    Dim FTPRes As FtpWebResponse
+                    Try
+                        FTPRes = CType(FTPReq.GetResponse, FtpWebResponse)
+                    Catch ex As Exception
+
+                    End Try
+                    intCnt = 1
+                End If
                 CreateFile(fri.Name, intEmpresa, intParent, fri.DirectoryName, strChart)
-                'If GetEachFile(fri.FullName) Then
-                '    File.Create(fri.FullName & "\OK").Dispose()
-                'End If
             End If
         Next fri
+        strRet = True
 
         Return strRet
     End Function
@@ -540,37 +597,30 @@ Public Class frmMain
     End Function
     Private Function UploadFile(ByVal LocalFileName As String, ByVal miUri As String, miFolder As String) As Boolean
         Dim strRet As Boolean = False
-        FTPSettings.UserID = "ftpuser"
-        FTPSettings.Password = "Zr;:F+7.9gm=D+m"
 
         'Dim miRequest As System.Net.FtpWebRequest = DirectCast(System.Net.WebRequest.Create(miUri), System.Net.FtpWebRequest)
-        'miRequest.Credentials = New Net.NetworkCredential(FTPSettings.UserID, FTPSettings.Password)
+        'miRequest.Credentials = New Net.NetworkCredential(fUserID, fPassword)
         'miRequest.Method = Net.WebRequestMethods.Ftp.UploadFile
+
         Try
-            If Not WebRequestMethods.Ftp.ListDirectoryDetails.Contains(miFolder) Then
-
-                Dim FTPReq As System.Net.FtpWebRequest = CType(WebRequest.Create(miFolder), FtpWebRequest)
-                FTPReq.Credentials = New NetworkCredential(FTPSettings.UserID, FTPSettings.Password)
-                FTPReq.Method = WebRequestMethods.Ftp.MakeDirectory
-
-                Dim FTPRes As FtpWebResponse
-                Try
-                    FTPRes = CType(FTPReq.GetResponse, FtpWebResponse)
-                Catch ex As Exception
-
-                End Try
-
-            End If
-
-            My.Computer.Network.UploadFile(LocalFileName, miUri, FTPSettings.UserID, FTPSettings.Password)
+            ftpCli.UploadFile(LocalFileName, miUri)
+            'ftpCli.ConnectMode = EnterpriseDT.Net.Ftp.FTPConnectMode.ACTIVE
+            ''My.Computer.Network.UploadFile(LocalFileName, miUri, FTPSettings.UserID, FTPSettings.Password)
             'Dim bFile() As Byte = System.IO.File.ReadAllBytes(LocalFileName)
+            Application.DoEvents()
             'Dim miStream As System.IO.Stream = miRequest.GetRequestStream()
             'miStream.Write(bFile, 0, bFile.Length)
             'miStream.Close()
             'miStream.Dispose()
-            'strRet = True
+            strRet = True
         Catch ex As Exception
-            Throw New Exception(ex.Message & ". File cannot be snded.")
+            Try
+                ftpCli.UploadFile(LocalFileName, miUri)
+                strRet = True
+            Catch ex2 As Exception
+                strRet = False
+            End Try
+            
         End Try
         Return strRet
     End Function
