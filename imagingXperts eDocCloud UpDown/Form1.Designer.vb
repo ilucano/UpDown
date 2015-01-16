@@ -46,6 +46,7 @@ Partial Class frmMain
         Me.cntMnu = New System.Windows.Forms.ContextMenuStrip(Me.components)
         Me.ToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem()
         Me.fldBrowse = New System.Windows.Forms.FolderBrowserDialog()
+        Me.ftpCli = New EnterpriseDT.Net.Ftp.FTPConnection(Me.components)
         Me.tabGen.SuspendLayout()
         Me.tab1.SuspendLayout()
         Me.ToolStrip1.SuspendLayout()
@@ -242,6 +243,11 @@ Partial Class frmMain
         Me.ToolStripMenuItem1.Size = New System.Drawing.Size(150, 22)
         Me.ToolStripMenuItem1.Text = "Download Box"
         '
+        'ftpCli
+        '
+        Me.ftpCli.ParentControl = Me
+        Me.ftpCli.TransferNotifyInterval = CType(4096, Long)
+        '
         'frmMain
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
@@ -286,5 +292,6 @@ Partial Class frmMain
     Friend WithEvents ToolStripSeparator3 As System.Windows.Forms.ToolStripSeparator
     Friend WithEvents prg As System.Windows.Forms.ToolStripProgressBar
     Friend WithEvents chkMeta As System.Windows.Forms.CheckBox
+    Friend WithEvents ftpCli As EnterpriseDT.Net.Ftp.FTPConnection
 
 End Class
