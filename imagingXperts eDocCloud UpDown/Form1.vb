@@ -497,12 +497,14 @@ Public Class frmMain
             'arc/2014/3/838/1321/
             ' arc <year> <company> <order> <parent>
             Dim strText1 As String = "/arc/"
+            Dim strText2 As String = "arc/"
             Dim strYear As String = Now.Year.ToString
             Dim miFolder As String
 
             miFolder = "/opt/eDocCloud/files" & strText1 & strYear & _
                 "/" & intEmpresa.ToString & "/" & intParent.ToString & "/" & strChart
-            strRemotePath = miFolder & "/" & strFile
+            strRemotePath = strText2 & strYear & _
+                "/" & intEmpresa.ToString & "/" & intParent.ToString & "/" & strChart & "/" & strFile
 
             If UploadFile(strPath & "\" & strFile, strRemotePath, miFolder) Then
 
@@ -541,6 +543,8 @@ Public Class frmMain
             End If
         Catch ex As Exception
             Console.WriteLine(ex.Message)
+        Finally
+            ' ftpCli.Close()
         End Try
     End Sub
     Private Function GetEachFile(strDir As String, intEmpresa As Integer, intParent As Integer, strChart As String) As Boolean
