@@ -273,6 +273,7 @@ Public Class frmMain
                     DownloadFile(strChart, reader.GetValue(1), "" & reader.GetValue(10))
                 End If
 
+
             End While
 
             conn.Close()
