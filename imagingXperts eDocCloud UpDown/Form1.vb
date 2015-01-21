@@ -13,6 +13,11 @@ Public Class frmMain
     Const cnStr As String = "server=www.edoccloud.com;user id=shaman;password=pampita1280;database=ilucano_edoccloud"
     Dim fUserID As String = "ftpuser"
     Dim fPassword As String = "Zr;:F+7.9gm=D+m"
+    Private Const ERR_CODE As String = "-1"
+
+    ' Autenticacion
+    Private eToken As String
+
     Private m_OldSelectNode As TreeNode
 
     Private Sub frmMain_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
@@ -32,73 +37,52 @@ Public Class frmMain
         Else
             txtFolder.Text = "C:\TEST"
         End If
+
+        Dim oAu As New oAuth.Authenticate
+        eToken = oAu.GetToken("caringpeople", "test123", "36f13093ac392f9e92d8376d0542ca70")
+
         RefreshList()
         RefreshListWF()
     End Sub
     Private Sub RefreshList()
         tView.Nodes.Clear()
 
-        Try
-            
-            Dim query As String = "SELECT * FROM companies"
+        Dim oC As New oCompanies.Company
+        Dim sRet() As oCompanies.CompanyType
 
-            Dim conn As New MySqlConnection(cnStr)
-            Dim cmd As New MySqlCommand(query, conn)
-            Try
-                conn.Open()
-            Catch myerror As MySqlException
-                MsgBox("Connection to the Database Failed")
-            End Try
-            Dim reader As MySqlDataReader
-            reader = cmd.ExecuteReader()
+        oC.GetCompanies(eToken)
 
-            While reader.Read()
+        sRet = oC.GetCompanies(eToken)
+        If sRet(0).row_id <> ERR_CODE Then
+            For i = 0 To (sRet.Count - 1)
                 Dim li As New TreeNode
                 li.ImageIndex = 0
                 li.SelectedImageIndex = 0
-                li.Tag = reader.GetValue(0)
-                li.Text = reader.GetString(1)
+                li.Tag = sRet(i).row_id
+                li.Text = sRet(i).company_name
                 tView.Nodes.Add(li)
                 GetOrders(li)
-            End While
-
-            conn.Close()
-
-        Catch ex As Exception
-            Console.WriteLine(ex.Message)
-        End Try
+            Next
+        End If
 
     End Sub
     Private Sub RefreshListWF()
         lView.Items.Clear()
 
-        Try
+        Dim oP As New oPickup.Pickup
+        Dim sRet() As oPickup.BoxData
 
-            Dim query As String = "SELECT * FROM workflow WHERE fk_status = 12"
+        sRet = oP.GetBoxbyStatus("12", eToken)
 
-            Dim conn As New MySqlConnection(cnStr)
-            Dim cmd As New MySqlCommand(query, conn)
-            Try
-                conn.Open()
-            Catch myerror As MySqlException
-                MsgBox("Connection to the Database Failed")
-            End Try
-            Dim reader As MySqlDataReader
-            reader = cmd.ExecuteReader()
-
-            While reader.Read()
+        If sRet(0).row_id <> ERR_CODE Then
+            For i = 0 To (sRet.Count - 1)
                 Dim li As New ListViewItem
                 'li.ImageIndex = 0
-                li.Tag = reader.GetValue(0)
-                li.Text = reader.GetString(1)
+                li.Tag = sRet(i).row_id
+                li.Text = sRet(i).wf_id
                 lView.Items.Add(li)
-            End While
-
-            conn.Close()
-
-        Catch ex As Exception
-            Console.WriteLine(ex.Message)
-        End Try
+            Next
+        End If
 
     End Sub
     Private Sub GetOrders(pli As TreeNode)
@@ -325,6 +309,7 @@ Public Class frmMain
             Throw New Exception(ex.Message.ToString())
         End Try
     End Sub
+
     Public NotInheritable Class FTPSettings
         Private Sub New()
         End Sub
@@ -360,7 +345,6 @@ Public Class frmMain
     Private Sub ToolStripButton1_Click(sender As Object, e As EventArgs) Handles ToolStripButton1.Click
         RefreshListWF()
     End Sub
-
     Private Sub ToolStripButton2_Click(sender As Object, e As EventArgs) Handles ToolStripButton2.Click
         ' Primero Busco la Caja la obtengo del WF
         If lView.SelectedItems.Count > 0 Then
@@ -380,29 +364,17 @@ Public Class frmMain
     End Sub
     Public Sub UploadBox(wfId As String, dirFold As String)
 
-        Try
-            Dim query As String = "SELECT * FROM pickup WHERE fk_barcode = " & wfId
+        Dim oP As New oPickup.Pickup
+        Dim sRet() As oPickup.PickupData
 
-            Dim conn As New MySqlConnection(cnStr)
-            Dim cmd As New MySqlCommand(query, conn)
-            Try
-                conn.Open()
-            Catch myerror As MySqlException
-                MsgBox("Connection to the Database Failed. Get Pickup")
-            End Try
-            Dim reader As MySqlDataReader
-            reader = cmd.ExecuteReader()
+        sRet = oP.GetPickupbyBcd(wfId, eToken)
 
-            While reader.Read()
-                ' Box: reader.GetValue(11)
-                FindCharts(reader.GetValue(11), dirFold, reader.GetValue(2))
-            End While
+        If sRet(0).row_id <> ERR_CODE Then
+            For i = 0 To (sRet.Count - 1)
+                FindCharts(sRet(i).fk_box, dirFold, sRet(i).fk_company)
+            Next
+        End If
 
-            conn.Close()
-
-        Catch ex As Exception
-            Console.WriteLine(ex.Message)
-        End Try
     End Sub
     Private Sub FindCharts(boxId As String, strFolder As String, strCompany As Integer)
         ' Cargo todos los directorios de la carpeta en el objects
@@ -434,17 +406,6 @@ Public Class frmMain
         End Try
 
         ftpCli.ServerDirectory = miFolder
-
-        'Dim FTPReq As System.Net.FtpWebRequest = CType(WebRequest.Create(miFolder), FtpWebRequest)
-        'FTPReq.Credentials = New NetworkCredential(fUserID, fPassword)
-        'FTPReq.Method = WebRequestMethods.Ftp.MakeDirectory
-
-        'Dim FTPRes As FtpWebResponse
-        'Try
-        '    FTPRes = CType(FTPReq.GetResponse, FtpWebResponse)
-        'Catch ex As Exception
-        '    MessageBox.Show("ex")
-        'End Try
 
         For Each fri In fiArr
             prg.Increment(1)
@@ -512,7 +473,12 @@ Public Class frmMain
                 For i = 1 To intPages
                     Dim its As New iTextSharp.text.pdf.parser.SimpleTextExtractionStrategy
 
-                    sOut &= iTextSharp.text.pdf.parser.PdfTextExtractor.GetTextFromPage(oReader, i, its)
+                    Try
+                        sOut &= iTextSharp.text.pdf.parser.PdfTextExtractor.GetTextFromPage(oReader, i, its)
+                    Catch ex As Exception
+
+                    End Try
+
                 Next
 
                 Dim query As String = "INSERT INTO files (filename, creadate, moddate, pages" & _
@@ -631,9 +597,6 @@ Public Class frmMain
         Return strRet
     End Function
 
-    Private Sub lView_SelectedIndexChanged(sender As Object, e As EventArgs) Handles lView.SelectedIndexChanged
-
-    End Sub
 End Class
 
 

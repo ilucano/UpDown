@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="urn:authenticate" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="urn:authenticate" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="urn:authenticate">
+      <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/" />
+      <xsd:import namespace="http://schemas.xmlsoap.org/wsdl/" />
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="GetTokenRequest">
+    <wsdl:part name="username" type="xsd:string" />
+    <wsdl:part name="password" type="xsd:string" />
+    <wsdl:part name="apikey" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="GetTokenResponse">
+    <wsdl:part name="return" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:portType name="AuthenticatePortType">
+    <wsdl:operation name="GetToken">
+      <documentation>Retrieve token for valid connections</documentation>
+      <wsdl:input message="tns:GetTokenRequest" />
+      <wsdl:output message="tns:GetTokenResponse" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="AuthenticateBinding" type="tns:AuthenticatePortType">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="rpc" />
+    <wsdl:operation name="GetToken">
+      <soap:operation soapAction="urn:authenticatewsdl#GetToken" style="rpc" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:authenticatewsdl" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:authenticatewsdl" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="Authenticate">
+    <wsdl:port name="AuthenticatePort" binding="tns:AuthenticateBinding">
+      <soap:address location="http://www.edoccloud.com/api/auth.php" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

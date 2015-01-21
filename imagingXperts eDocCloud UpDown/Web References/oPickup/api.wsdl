@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="urn:pickup" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="urn:pickup" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="urn:pickup">
+      <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/" />
+      <xsd:import namespace="http://schemas.xmlsoap.org/wsdl/" />
+      <xsd:complexType name="BoxData">
+        <xsd:all>
+          <xsd:element name="row_id" type="xsd:integer" />
+          <xsd:element name="wf_id" type="xsd:string" />
+          <xsd:element name="fk_status" type="xsd:integer" />
+        </xsd:all>
+      </xsd:complexType>
+      <xsd:complexType name="BoxArray">
+        <xsd:complexContent mixed="false">
+          <xsd:restriction base="SOAP-ENC:Array">
+            <xsd:attribute wsdl:arrayType="tns:BoxData[]" ref="SOAP-ENC:arrayType" />
+          </xsd:restriction>
+        </xsd:complexContent>
+      </xsd:complexType>
+      <xsd:complexType name="PickupData">
+        <xsd:all>
+          <xsd:element name="row_id" type="xsd:integer" />
+          <xsd:element name="fk_user" type="xsd:integer" />
+          <xsd:element name="fk_company" type="xsd:integer" />
+          <xsd:element name="fk_order" type="xsd:integer" />
+          <xsd:element name="fk_barcode" type="xsd:string" />
+          <xsd:element name="qty" type="xsd:integer" />
+          <xsd:element name="fk_box" type="xsd:integer" />
+        </xsd:all>
+      </xsd:complexType>
+      <xsd:complexType name="PickupArray">
+        <xsd:complexContent mixed="false">
+          <xsd:restriction base="SOAP-ENC:Array">
+            <xsd:attribute wsdl:arrayType="tns:PickupData[]" ref="SOAP-ENC:arrayType" />
+          </xsd:restriction>
+        </xsd:complexContent>
+      </xsd:complexType>
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="GetBoxbyStatusRequest">
+    <wsdl:part name="strStatus" type="xsd:string" />
+    <wsdl:part name="token" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="GetBoxbyStatusResponse">
+    <wsdl:part name="return" type="tns:BoxArray" />
+  </wsdl:message>
+  <wsdl:message name="GetPickupbyBcdRequest">
+    <wsdl:part name="strBarcode" type="xsd:string" />
+    <wsdl:part name="token" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="GetPickupbyBcdResponse">
+    <wsdl:part name="return" type="tns:PickupArray" />
+  </wsdl:message>
+  <wsdl:message name="GetBoxCompanyRequest">
+    <wsdl:part name="strBox" type="xsd:string" />
+    <wsdl:part name="token" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="GetBoxCompanyResponse">
+    <wsdl:part name="return" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="ChangeStatusRequest">
+    <wsdl:part name="strBox" type="xsd:string" />
+    <wsdl:part name="strStatus" type="xsd:string" />
+    <wsdl:part name="userid" type="xsd:string" />
+    <wsdl:part name="token" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="ChangeStatusResponse">
+    <wsdl:part name="return" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:portType name="PickupPortType">
+    <wsdl:operation name="GetBoxbyStatus">
+      <documentation>Get all boxes on status.</documentation>
+      <wsdl:input message="tns:GetBoxbyStatusRequest" />
+      <wsdl:output message="tns:GetBoxbyStatusResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetPickupbyBcd">
+      <documentation>Get all boxes on status.</documentation>
+      <wsdl:input message="tns:GetPickupbyBcdRequest" />
+      <wsdl:output message="tns:GetPickupbyBcdResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetBoxCompany">
+      <documentation>Get Company for Box</documentation>
+      <wsdl:input message="tns:GetBoxCompanyRequest" />
+      <wsdl:output message="tns:GetBoxCompanyResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="ChangeStatus">
+      <documentation>Change status of a Box</documentation>
+      <wsdl:input message="tns:ChangeStatusRequest" />
+      <wsdl:output message="tns:ChangeStatusResponse" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="PickupBinding" type="tns:PickupPortType">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="rpc" />
+    <wsdl:operation name="GetBoxbyStatus">
+      <soap:operation soapAction="urn:pickupwsdl#GetBoxbyStatus" style="rpc" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:pickupwsdl" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:pickupwsdl" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetPickupbyBcd">
+      <soap:operation soapAction="urn:pickupwsdl#GetPickupbyBcd" style="rpc" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:pickupwsdl" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:pickupwsdl" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetBoxCompany">
+      <soap:operation soapAction="urn:pickupwsdl#GetBoxCompany" style="rpc" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:pickupwsdl" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:pickupwsdl" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ChangeStatus">
+      <soap:operation soapAction="urn:pickupwsdl#ChangeStatus" style="rpc" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:pickupwsdl" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:pickupwsdl" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="Pickup">
+    <wsdl:port name="PickupPort" binding="tns:PickupBinding">
+      <soap:address location="http://www.edoccloud.com/api/api.pickup.php" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
