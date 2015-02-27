@@ -10,7 +10,7 @@ Public Class frmMain
 
 
     'Dim conn As MySqlConnection
-    Const cnStr As String = "server=www.edoccloud.com;user id=shaman;password=pampita1280;database=ilucano_edoccloud"
+    Const cnStr As String = "server=nlapi.edoccloud.com;user id=shaman;password=pampita1280;database=ilucano_edoccloud"
     Dim fUserID As String = "ftpuser"
     Dim fPassword As String = "Zr;:F+7.9gm=D+m"
     Private Const ERR_CODE As String = "-1"
@@ -273,7 +273,7 @@ Public Class frmMain
         End If
     End Sub
     Private Sub DownloadFile(ByVal SaveFilePath As String, ByVal SaveFileName As String, ByVal RemoteFile As String)
-        FTPSettings.IP = "www.edoccloud.com"
+        FTPSettings.IP = "nlapi.edoccloud.com"
         FTPSettings.UserID = "ftpuser"
         FTPSettings.Password = "Zr;:F+7.9gm=D+m"
         Dim reqFTP As FtpWebRequest = Nothing
@@ -352,6 +352,37 @@ Public Class frmMain
             If fldBrowse.ShowDialog() = Windows.Forms.DialogResult.OK Then
                 If My.Computer.FileSystem.DirectoryExists(fldBrowse.SelectedPath) Then
                     UploadBox(lView.SelectedItems(0).Text, fldBrowse.SelectedPath)
+
+
+                    Dim cnStr As String = "server=nlapi.edoccloud.com;user id=shaman;password=pampita1280;database=ilucano_edoccloud"
+                    Dim strRet As String = "-1"
+
+                    Try
+                        Dim conn As MySqlConnection
+                        conn = New MySqlConnection()
+                        conn.ConnectionString = cnStr
+                        Try
+                            conn.Open()
+                        Catch myerror As MySqlException
+                            MsgBox("Connection to the Database Failed")
+                            GoTo a
+                        End Try
+
+                        Dim query As String = "UPDATE workflow SET fk_status = 15 WHERE wf_id = '" & lView.SelectedItems(0).Text & "'"
+
+                        Dim connection As New MySqlConnection(cnStr)
+                        Dim cmd As New MySqlCommand(query, connection)
+                        connection.Open()
+                        cmd.ExecuteNonQuery()
+
+                        conn.Close()
+
+                    Catch ex As Exception
+                        Console.WriteLine(ex.Message)
+                    End Try
+
+a:
+
                     MessageBox.Show("Box Uploaded Correctly", "imagingXperts LLC", MessageBoxButtons.OK, MessageBoxIcon.Information)
                     prg.Value = 0
                 Else
@@ -417,6 +448,9 @@ Public Class frmMain
                 End If
             End If
         Next fri
+
+        ftpCli.Close()
+        ftpCli.Dispose()
     End Sub
     Private Function CreateChart(strCompany As Integer, strFolder As String, boxId As String) As String
         Dim retVal As String = "-1"
@@ -592,7 +626,7 @@ Public Class frmMain
             Catch ex2 As Exception
                 strRet = False
             End Try
-            
+
         End Try
         Return strRet
     End Function
