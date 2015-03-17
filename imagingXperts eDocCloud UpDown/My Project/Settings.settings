@@ -11,5 +11,11 @@
     <Setting Name="imagingXperts_eDocCloud_UpDown_oPickup_Pickup" Type="(Web Service URL)" Scope="Application">
       <Value Profile="(Default)">http://www.edoccloud.com/api/api.pickup.php</Value>
     </Setting>
+    <Setting Name="imagingXperts_eDocCloud_UpDown_oObjects_Orders" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://www.edoccloud.com/api/api.objects.php</Value>
+    </Setting>
+    <Setting Name="imagingXperts_eDocCloud_UpDown_oFiles_Files" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">http://www.edoccloud.com/api/api.files.php</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

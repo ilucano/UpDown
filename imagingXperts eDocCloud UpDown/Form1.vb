@@ -21,10 +21,12 @@ Public Class frmMain
     Private m_OldSelectNode As TreeNode
 
     Private Sub frmMain_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
+        'SWITCH TO API: OK
         Dim lngRC As Long
         lngRC = WritePrivateProfileString("Download", "DownloadPath", txtFolder.Text, "appinfo.ini")
     End Sub
     Private Sub frmMain_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        'SWITCH TO API: OK
         Dim rcl As Integer
         Dim strWork As String
 
@@ -45,6 +47,7 @@ Public Class frmMain
         RefreshListWF()
     End Sub
     Private Sub RefreshList()
+        'SWITCH TO API: OK
         tView.Nodes.Clear()
 
         Dim oC As New oCompanies.Company
@@ -86,75 +89,64 @@ Public Class frmMain
 
     End Sub
     Private Sub GetOrders(pli As TreeNode)
+        'SWITCH TO API: OK
         Try
-            Dim query As String = "SELECT * FROM objects WHERE fk_obj_type = 1 AND fk_company = " & pli.Tag
+            Dim oOb As New oObjects.Orders
+            Dim sRet() As oObjects.ObjectData
 
-            Dim conn As New MySqlConnection(cnStr)
-            Dim cmd As New MySqlCommand(query, conn)
-            Try
-                conn.Open()
-            Catch myerror As MySqlException
-                MsgBox("Connection to the Database Failed")
-            End Try
-            Dim reader As MySqlDataReader
-            reader = cmd.ExecuteReader()
-
-            While reader.Read()
-                Dim li As New TreeNode
-                li.ImageIndex = 1
-                li.SelectedImageIndex = 1
-                li.Tag = reader.GetValue(0)
-                li.Text = reader.GetString(4)
-                pli.Nodes.Add(li)
-                GetBoxes(li)
-            End While
-
-            conn.Close()
+            sRet = oOb.GetOrders(pli.Tag.ToString, eToken)
+            If sRet(0).row_id <> ERR_CODE Then
+                For i = 0 To (sRet.Count - 1)
+                    Dim li As New TreeNode
+                    li.ImageIndex = 1
+                    li.SelectedImageIndex = 1
+                    li.Tag = sRet(i).row_id
+                    li.Text = sRet(i).f_name
+                    pli.Nodes.Add(li)
+                    GetBoxes(li)
+                Next
+            End If
 
         Catch ex As Exception
             Console.WriteLine(ex.Message)
         End Try
     End Sub
     Private Sub GetBoxes(pli As TreeNode)
+        'SWITCH TO API: OK
         Try
-            Dim query As String = "SELECT * FROM objects WHERE fk_obj_type = 2 AND fk_parent = " & pli.Tag & " ORDER BY f_code ASC"
+            Dim oOb As New oObjects.Orders
+            Dim sRet() As oObjects.ObjectData
 
-            Dim conn As New MySqlConnection(cnStr)
-            Dim cmd As New MySqlCommand(query, conn)
-            Try
-                conn.Open()
-            Catch myerror As MySqlException
-                MsgBox("Connection to the Database Failed")
-            End Try
-            Dim reader As MySqlDataReader
-            reader = cmd.ExecuteReader()
-
-            While reader.Read()
-                Dim li As New TreeNode
-                li.ImageIndex = 2
-                li.SelectedImageIndex = 2
-                li.Tag = reader.GetValue(0)
-                li.Text = reader.GetString(3) & " - " & reader.GetString(4) ' & " (" & reader.GetString(4) & ")"
-                pli.Nodes.Add(li)
-                'GetOrders(li)
-            End While
-
-            conn.Close()
+            sRet = oOb.GetBoxes(pli.Tag.ToString, eToken)
+            If sRet(0).row_id <> ERR_CODE Then
+                For i = 0 To (sRet.Count - 1)
+                    Dim li As New TreeNode
+                    li.ImageIndex = 2
+                    li.SelectedImageIndex = 2
+                    li.Tag = sRet(i).row_id
+                    li.Text = sRet(i).f_code & " - " & sRet(i).f_name  ' & " (" & reader.GetString(4) & ")"
+                    pli.Nodes.Add(li)
+                    'GetOrders(li)
+                Next
+            End If
 
         Catch ex As Exception
             Console.WriteLine(ex.Message)
         End Try
     End Sub
     Private Sub btnRefreshList_Click_1(sender As Object, e As EventArgs) Handles btnRefreshList.Click
+        'SWITCH TO API: OK
         RefreshList()
     End Sub
     Private Sub ToolStripMenuItem1_Click(sender As Object, e As EventArgs) Handles ToolStripMenuItem1.Click
+        'SWITCH TO API: OK
         ' Primero Verifico si tiene Algo
         Dim node As TreeNode = tView.SelectedNode
 
         DownloadBox(node)
     End Sub
     Private Sub tView_MouseUp(sender As Object, e As MouseEventArgs) Handles tView.MouseUp
+        'SWITCH TO API: OK
         If e.Button = MouseButtons.Right Then
 
             ' Point where mouse is clicked
@@ -184,6 +176,7 @@ Public Class frmMain
 
     End Sub
     Private Sub btnDown_Click(sender As Object, e As EventArgs) Handles btnDown.Click
+        'SWITCH TO API: OK
         If Not tView.SelectedNode Is Nothing Then
             If tView.SelectedNode.Level = 2 Then
                 DownloadBox(tView.SelectedNode)
@@ -191,123 +184,116 @@ Public Class frmMain
         End If
     End Sub
     Public Sub DownloadBox(node As TreeNode)
+        'SWITCH TO API: OK
         If My.Computer.FileSystem.DirectoryExists(txtFolder.Text) Then
+            DisableForm()
             Try
-                Dim query As String = "SELECT * FROM objects WHERE fk_obj_type = 3 AND fk_parent = " & node.Tag & " ORDER BY f_code ASC"
+                Dim oOb As New oObjects.Orders
+                Dim sRet() As oObjects.ObjectData
 
-                Dim conn As New MySqlConnection(cnStr)
-                Dim cmd As New MySqlCommand(query, conn)
-                Try
-                    conn.Open()
-                Catch myerror As MySqlException
-                    MsgBox("Connection to the Database Failed")
-                End Try
-                Dim reader As MySqlDataReader
-                reader = cmd.ExecuteReader()
+                sRet = oOb.GetCharts(node.Tag.ToString, eToken)
+                If sRet(0).row_id <> ERR_CODE Then
+                    For i = 0 To (sRet.Count - 1)
+                        ' Tiene Chars, los bajo
+                        ' Primero creo la carpeta de Box
+                        Dim strBox As String = txtFolder.Text & "\" & node.Tag & " - " & node.Text
+                        If Not My.Computer.FileSystem.DirectoryExists(strBox) Then
+                            My.Computer.FileSystem.CreateDirectory(strBox)
+                        End If
 
-                While reader.Read()
-                    ' Tiene Chars, los bajo
-                    ' Primero creo la carpeta de Box
-                    Dim strBox As String = txtFolder.Text & "\" & node.Tag & " - " & node.Text
-                    If Not My.Computer.FileSystem.DirectoryExists(strBox) Then
-                        My.Computer.FileSystem.CreateDirectory(strBox)
-                    End If
+                        ' Ahora creo la carpeta de Char
+                        Dim strChart As String = strBox & "\"
+                        If IsDBNull(sRet(i).f_code) Or sRet(i).f_code = "" Then
+                            strChart = strBox & "\" & sRet(i).f_name
+                        Else
+                            strChart = strBox & "\" & sRet(i).f_code & " - " & sRet(i).f_name
+                        End If
+                        If Not My.Computer.FileSystem.DirectoryExists(strChart) Then
+                            My.Computer.FileSystem.CreateDirectory(strChart)
+                        End If
 
-                    ' Ahora creo la carpeta de Char
-                    Dim strChart As String = strBox & "\"
-                    If IsDBNull(reader.GetValue(3)) Or reader.GetValue(3) = "" Then
-                        strChart = strBox & "\" & reader.GetValue(4)
-                    Else
-                        strChart = strBox & "\" & reader.GetValue(3) & " - " & reader.GetValue(4)
-                    End If
-                    If Not My.Computer.FileSystem.DirectoryExists(strChart) Then
-                        My.Computer.FileSystem.CreateDirectory(strChart)
-                    End If
+                        DownloadChars(sRet(i).row_id, strChart)
 
-                    DownloadChars(reader.GetValue(0), strChart)
+                    Next
+                End If
 
-                End While
-
-                conn.Close()
-
+                EnableForm()
+                MessageBox.Show("Box Downloadaed Correctly", "imagingXperts LLC", MessageBoxButtons.OK, MessageBoxIcon.Information)
             Catch ex As Exception
                 Console.WriteLine(ex.Message)
+                EnableForm()
+                MessageBox.Show(ex.Message, "imagingXperts LLC", MessageBoxButtons.OK, MessageBoxIcon.Error)
             End Try
         End If
     End Sub
+    Public Sub DisableForm()
+        'SWITCH TO API: OK
+        ToolStrip1.Enabled = False
+        tView.Enabled = False
+        tabGen.Enabled = False
+    End Sub
+    Public Sub EnableForm()
+        'SWITCH TO API: OK
+        ToolStrip1.Enabled = True
+        tView.Enabled = True
+        tabGen.Enabled = True
+    End Sub
     Public Sub DownloadChars(rowId As Integer, strChart As String)
+        'SWITCH TO API: OK
         Try
-            Dim query As String = "SELECT * FROM files WHERE parent_id = " & rowId
+            Dim oOb As New oFiles.Files
+            Dim sRet() As oFiles.FilesData
 
-            Dim conn As New MySqlConnection(cnStr)
-            Dim cmd As New MySqlCommand(query, conn)
-            Try
-                conn.Open()
-            Catch myerror As MySqlException
-                MsgBox("Connection to the Database Failed")
-            End Try
-            Dim reader As MySqlDataReader
-            reader = cmd.ExecuteReader()
+            sRet = oOb.GetFiles(rowId.ToString, eToken)
+            If sRet(0).row_id <> ERR_CODE Then
+                For i = 0 To (sRet.Count - 1)
+                    If My.Computer.FileSystem.FileExists(strChart & "\" & sRet(i).filename) Then
 
-            While reader.Read()
-                
-                If My.Computer.FileSystem.FileExists(strChart & "\" & reader.GetValue(1)) Then
-
-                Else
-                    DownloadFile(strChart, reader.GetValue(1), "" & reader.GetValue(10))
-                End If
-
-
-            End While
-
-            conn.Close()
+                    Else
+                        DownloadFile(strChart, sRet(i).filename, "" & sRet(0).path)
+                    End If
+                Next
+            End If
 
         Catch ex As Exception
             Console.WriteLine(ex.Message)
         End Try
     End Sub
     Private Sub btnBrowse_Click(sender As Object, e As EventArgs) Handles btnBrowse.Click
+        'SWITCH TO API: OK
         fldBrowse.SelectedPath = txtFolder.Text
         If fldBrowse.ShowDialog() = Windows.Forms.DialogResult.OK Then
             txtFolder.Text = fldBrowse.SelectedPath
         End If
     End Sub
     Private Sub DownloadFile(ByVal SaveFilePath As String, ByVal SaveFileName As String, ByVal RemoteFile As String)
-        FTPSettings.IP = "nlapi.edoccloud.com"
-        FTPSettings.UserID = "ftpuser"
-        FTPSettings.Password = "Zr;:F+7.9gm=D+m"
-        Dim reqFTP As FtpWebRequest = Nothing
-        Dim ftpStream As Stream = Nothing
+
+        If ftpCli.IsConnected = False Then
+            ftpCli.ServerAddress = "ftp.edoccloud.com"
+            ftpCli.UserName = fUserID
+            ftpCli.Password = fPassword
+            ftpCli.LogLevel = EnterpriseDT.Util.Debug.LogLevel.Debug
+            ftpCli.LogToConsole = True
+            ftpCli.ConnectMode = EnterpriseDT.Net.Ftp.FTPConnectMode.PASV
+            ftpCli.Connect()
+        End If
+        
+
         Try
-            Dim outputStream As New FileStream(SaveFilePath + "\" + SaveFileName, FileMode.Create)
-            Dim strPath As String = Uri.EscapeUriString("ftp://" + FTPSettings.IP + "/opt/eDocCloud/files/" + RemoteFile)
-            reqFTP = DirectCast(FtpWebRequest.Create(strPath), FtpWebRequest)
-            reqFTP.Method = WebRequestMethods.Ftp.DownloadFile
-            reqFTP.UseBinary = True
-            reqFTP.Credentials = New NetworkCredential(fUserID, fPassword)
-            Dim response As FtpWebResponse = DirectCast(reqFTP.GetResponse(), FtpWebResponse)
-            ftpStream = response.GetResponseStream()
-            Dim cl As Long = response.ContentLength
-            Dim bufferSize As Integer = 2048
-            Dim readCount As Integer
-            Dim buffer As Byte() = New Byte(bufferSize - 1) {}
-
-            readCount = ftpStream.Read(buffer, 0, bufferSize)
-            While readCount > 0
-                outputStream.Write(buffer, 0, readCount)
-                readCount = ftpStream.Read(buffer, 0, bufferSize)
-            End While
-
-            ftpStream.Close()
-            outputStream.Close()
-            response.Close()
-        Catch ex As Exception
-            If ftpStream IsNot Nothing Then
-                ftpStream.Close()
-                ftpStream.Dispose()
+            
+            Dim strPath As String = Uri.EscapeUriString("ftp://ftp.edoccloud.com/opt/eDocCloud/files/" + RemoteFile)
+            'Dim strPath As String = "ftp://ftp.edoccloud.com/opt/eDocCloud/files/" + RemoteFile
+            Dim strFile As String = Path.GetFileName(RemoteFile)
+            Dim strFolder As String = RemoteFile.Replace(strFile, "")
+            If My.Computer.FileSystem.FileExists(SaveFilePath & "\" & strFile) = False Then
+                ftpCli.ChangeWorkingDirectory("/opt/eDocCloud/files/" & strFolder)
+                ftpCli.DownloadFile((SaveFilePath & "\").Replace("\", "\\"), strFile)
             End If
-            Throw New Exception(ex.Message.ToString())
+            
+        Catch ex As Exception
+            MessageBox.Show(ex.Message)
         End Try
+
     End Sub
 
     Public NotInheritable Class FTPSettings
@@ -343,6 +329,7 @@ Public Class frmMain
     End Class
 
     Private Sub ToolStripButton1_Click(sender As Object, e As EventArgs) Handles ToolStripButton1.Click
+        'SWITCH TO API: OK
         RefreshListWF()
     End Sub
     Private Sub ToolStripButton2_Click(sender As Object, e As EventArgs) Handles ToolStripButton2.Click
@@ -394,7 +381,7 @@ a:
         End If
     End Sub
     Public Sub UploadBox(wfId As String, dirFold As String)
-
+        'SWITCH TO API: OK
         Dim oP As New oPickup.Pickup
         Dim sRet() As oPickup.PickupData
 
@@ -408,6 +395,7 @@ a:
 
     End Sub
     Private Sub FindCharts(boxId As String, strFolder As String, strCompany As Integer)
+        'SWITCH TO API: OK
         ' Cargo todos los directorios de la carpeta en el objects
         Dim di As New DirectoryInfo(strFolder)
         ' Get a reference to each file in that directory.
@@ -589,6 +577,7 @@ a:
         Return strRet
     End Function
     Public Shared Function GetTextFromPDF(PdfFileName As String) As String
+        'SWITCH TO API: OK
         Dim oReader As New iTextSharp.text.pdf.PdfReader(PdfFileName)
 
         Dim sOut = ""
@@ -602,6 +591,7 @@ a:
         Return sOut
     End Function
     Private Function UploadFile(ByVal LocalFileName As String, ByVal miUri As String, miFolder As String) As Boolean
+        'SWITCH TO API: OK
         Dim strRet As Boolean = False
 
         'Dim miRequest As System.Net.FtpWebRequest = DirectCast(System.Net.WebRequest.Create(miUri), System.Net.FtpWebRequest)

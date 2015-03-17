@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="urn:files" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="urn:files" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="urn:files">
+      <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/" />
+      <xsd:import namespace="http://schemas.xmlsoap.org/wsdl/" />
+      <xsd:complexType name="FilesData">
+        <xsd:all>
+          <xsd:element name="row_id" type="xsd:integer" />
+          <xsd:element name="filename" type="xsd:string" />
+          <xsd:element name="pages" type="xsd:integer" />
+          <xsd:element name="filesize" type="xsd:integer" />
+          <xsd:element name="fk_empresa" type="xsd:integer" />
+          <xsd:element name="parent_id" type="xsd:integer" />
+          <xsd:element name="path" type="xsd:string" />
+        </xsd:all>
+      </xsd:complexType>
+      <xsd:complexType name="FilesArray">
+        <xsd:complexContent mixed="false">
+          <xsd:restriction base="SOAP-ENC:Array">
+            <xsd:attribute wsdl:arrayType="tns:FilesData[]" ref="SOAP-ENC:arrayType" />
+          </xsd:restriction>
+        </xsd:complexContent>
+      </xsd:complexType>
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="GetFilesRequest">
+    <wsdl:part name="strParent" type="xsd:string" />
+    <wsdl:part name="token" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="GetFilesResponse">
+    <wsdl:part name="return" type="tns:FilesArray" />
+  </wsdl:message>
+  <wsdl:portType name="FilesPortType">
+    <wsdl:operation name="GetFiles">
+      <documentation>Get orders for the specified company.</documentation>
+      <wsdl:input message="tns:GetFilesRequest" />
+      <wsdl:output message="tns:GetFilesResponse" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="FilesBinding" type="tns:FilesPortType">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="rpc" />
+    <wsdl:operation name="GetFiles">
+      <soap:operation soapAction="urn:fileswsdl#GetFiles" style="rpc" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:fileswsdl" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:fileswsdl" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="Files">
+    <wsdl:port name="FilesPort" binding="tns:FilesBinding">
+      <soap:address location="http://www.edoccloud.com/api/api.files.php" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

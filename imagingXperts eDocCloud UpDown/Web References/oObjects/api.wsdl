@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="urn:orders" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="urn:orders" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="urn:orders">
+      <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/" />
+      <xsd:import namespace="http://schemas.xmlsoap.org/wsdl/" />
+      <xsd:complexType name="ObjectData">
+        <xsd:all>
+          <xsd:element name="row_id" type="xsd:integer" />
+          <xsd:element name="fk_obj_type" type="xsd:integer" />
+          <xsd:element name="fk_company" type="xsd:integer" />
+          <xsd:element name="f_code" type="xsd:string" />
+          <xsd:element name="f_name" type="xsd:string" />
+          <xsd:element name="fk_parent" type="xsd:integer" />
+          <xsd:element name="qty" type="xsd:integer" />
+          <xsd:element name="fk_status" type="xsd:integer" />
+          <xsd:element name="invoiced" type="xsd:string" />
+        </xsd:all>
+      </xsd:complexType>
+      <xsd:complexType name="ObjectArray">
+        <xsd:complexContent mixed="false">
+          <xsd:restriction base="SOAP-ENC:Array">
+            <xsd:attribute wsdl:arrayType="tns:ObjectData[]" ref="SOAP-ENC:arrayType" />
+          </xsd:restriction>
+        </xsd:complexContent>
+      </xsd:complexType>
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="GetOrdersRequest">
+    <wsdl:part name="strCompany" type="xsd:string" />
+    <wsdl:part name="token" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="GetOrdersResponse">
+    <wsdl:part name="return" type="tns:ObjectArray" />
+  </wsdl:message>
+  <wsdl:message name="GetBoxesRequest">
+    <wsdl:part name="strParent" type="xsd:string" />
+    <wsdl:part name="token" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="GetBoxesResponse">
+    <wsdl:part name="return" type="tns:ObjectArray" />
+  </wsdl:message>
+  <wsdl:message name="GetChartsRequest">
+    <wsdl:part name="strParent" type="xsd:string" />
+    <wsdl:part name="token" type="xsd:string" />
+  </wsdl:message>
+  <wsdl:message name="GetChartsResponse">
+    <wsdl:part name="return" type="tns:ObjectArray" />
+  </wsdl:message>
+  <wsdl:portType name="OrdersPortType">
+    <wsdl:operation name="GetOrders">
+      <documentation>Get orders for the specified company.</documentation>
+      <wsdl:input message="tns:GetOrdersRequest" />
+      <wsdl:output message="tns:GetOrdersResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetBoxes">
+      <documentation>Get orders for the specified company.</documentation>
+      <wsdl:input message="tns:GetBoxesRequest" />
+      <wsdl:output message="tns:GetBoxesResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetCharts">
+      <documentation>Get orders for the specified company.</documentation>
+      <wsdl:input message="tns:GetChartsRequest" />
+      <wsdl:output message="tns:GetChartsResponse" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="OrdersBinding" type="tns:OrdersPortType">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="rpc" />
+    <wsdl:operation name="GetOrders">
+      <soap:operation soapAction="urn:orderswsdl#GetOrders" style="rpc" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:orderswsdl" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:orderswsdl" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetBoxes">
+      <soap:operation soapAction="urn:boxeswsdl#GetBoxes" style="rpc" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:boxeswsdl" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:boxeswsdl" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetCharts">
+      <soap:operation soapAction="urn:boxeswsdl#GetCharts" style="rpc" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:boxeswsdl" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:boxeswsdl" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="Orders">
+    <wsdl:port name="OrdersPort" binding="tns:OrdersBinding">
+      <soap:address location="http://www.edoccloud.com/api/api.objects.php" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
